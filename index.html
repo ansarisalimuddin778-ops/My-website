@@ -1,0 +1,282 @@
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f5f7fb;
+  color: #111827;
+}
+
+header {
+  background: #111827;
+  color: white;
+  padding: 18px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 22px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 35px auto;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 5px 20px rgba(0,0,0,.08);
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 13px;
+  margin: 10px 0 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+textarea {
+  min-height: 100px;
+}
+
+button {
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+button:hover {
+  opacity: .85;
+}
+
+.status {
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+.item {
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+
+.item p {
+  margin-top: 7px;
+}
+</style>
+
+
+<header>
+  <h1>My Website 🚀</h1>
+  <span>Online</span>
+</header>
+
+
+<div class="container">
+
+  <div class="card">
+
+    <h2>Add Data</h2>
+
+    <input
+      id="name"
+      type="text"
+      placeholder="Enter name"
+    >
+
+    <textarea
+      id="message"
+      placeholder="Enter message"
+    ></textarea>
+
+    <button onclick="addData()">
+      Add
+    </button>
+
+    <div id="status" class="status"></div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>Saved Data</h2>
+
+    <br>
+
+    <button onclick="loadData()">
+      Refresh
+    </button>
+
+    <div id="data"></div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+"https://oeljtljejwckmbfqqtjh.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_ZYEZY9ct9dW0tCYKJz2GBw_x6j5KL5U";
+
+
+async function addData() {
+
+  const name =
+    document.getElementById("name").value;
+
+  const message =
+    document.getElementById("message").value;
+
+  const status =
+    document.getElementById("status");
+
+
+  if (!name || !message) {
+
+    status.innerText =
+      "Please fill all fields.";
+
+    return;
+  }
+
+
+  status.innerText = "Saving...";
+
+
+  try {
+
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/messages`,
+      {
+        method: "POST",
+
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization":
+            `Bearer ${SUPABASE_KEY}`,
+          "Content-Type":
+            "application/json",
+          "Prefer":
+            "return=representation"
+        },
+
+        body: JSON.stringify({
+          name: name,
+          message: message
+        })
+      }
+    );
+
+
+    if (!response.ok) {
+
+      const error =
+        await response.text();
+
+      status.innerText =
+        "Error: " + error;
+
+      return;
+    }
+
+
+    status.innerText =
+      "Saved successfully ✅";
+
+
+    document.getElementById("name").value = "";
+    document.getElementById("message").value = "";
+
+
+    loadData();
+
+  } catch (error) {
+
+    status.innerText =
+      "Connection error.";
+
+  }
+
+}
+
+
+async function loadData() {
+
+  const dataBox =
+document.getElementById("data");
+
+  dataBox.innerHTML = "Loading...";
+
+  try {
+
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/messages?select=*&order=id.desc`,
+      {
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      dataBox.innerHTML = "Error: " + error;
+      return;
+    }
+
+    const rows = await response.json();
+
+    if (rows.length === 0) {
+      dataBox.innerHTML = "No data found.";
+      return;
+    }
+
+    dataBox.innerHTML = "";
+
+    rows.forEach(row => {
+
+      const item = document.createElement("div");
+      item.className = "item";
+
+      item.innerHTML = `
+        <strong>${row.name}</strong>
+        <p>${row.message}</p>
+      `;
+
+      dataBox.appendChild(item);
+
+    });
+
+  } catch (error) {
+
+    dataBox.innerHTML = "Connection error.";
+
+  }
+
+}
+
+loadData();
